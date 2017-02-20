@@ -1,0 +1,77 @@
+---
+title: "HUDM5124Assignment3"
+author: "Zhuqian Zhou"
+date: "2017/2/19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##PART B 
+Kruskal’s Least-Squares Monotonic Transform
+
+Here is the dissimilarity data for the digits data (note we could also start from the original (symmetrized) confusions for nonmetric MDS):
+```{r}
+n <- 5
+DS <- matrix(c(0,875,800,125,890,875,0,600,850,670,800,600,0,925,675,125,850,925,0,890,890,670,675,890,0), nrow = n, byrow = FALSE, dimnames = list(c(1,2,3,4,5),c(1,2,3,4,5))) 
+DS
+```
+Here are the coordinates for the 2-dimensional solution:
+```{r}
+C <- matrix(c(0.914, -0.660, -0.649, 0.923, -0.589, -0.229, -0.078, -0.648, 0.172, 0.716), nrow = n, byrow = FALSE, dimnames = list(c(1,2,3,4,5),c("d1","d2"))) 
+C
+```
+1) Calculate the derived model distances between each pair of stimuli using the above coordinates (use the Euclidean distance metric).
+```{r}
+D <- matrix(rep(NA, 25), nrow = n, dimnames = list(c(1,2,3,4,5), c(1,2,3,4,5)))
+for (i in 1:n) {
+  for (j in 1:n) {
+    D[i,j] = ((C[i,1]-C[j,1])^2+(C[i,2]-C[j,2])^2)^0.5 }}
+D # a simpler way to do so is to use dist(C, method = "euclidean")
+```
+2) Re-order these model distances according to the order of the proximity data, and find the least-squares monotonic transform of the dissimilarities.
+```{r, error=TRUE}
+k <- 1
+R <- as.vector(matrix(rep(NA, 10), nrow=1))
+d <- as.vector(matrix(rep(NA, 10), nrow=1))
+for (i in 2:n) {
+  for (j in 1:(i-1)) {
+    R[k] <- DS[i,j]
+    d[k] <- D[i,j]
+    k <- k+1
+  }
+}
+R
+d
+R2 <- R
+d2 <- d
+m <- 10
+for (j in 1:m) {
+for (i in 1:(m-j)){
+  if (R2[i] > R2[i+1]) {
+    a <- R2[i]
+    R2[i] <- R2[i+1]
+    R2[i+1] <- a # bubble-sort the dissimilarity data, i.e. rank, R
+    b <- d2[i]
+    d2[i] <- d2[i+1]
+    d2[i+1] <- b # re-order the distance data according to the rank
+    }
+  i = i+1}
+j = j+1}
+R2
+d2
+#D = (d(1,4)=0.40, d(2,3)=0.57, d(2,5)=0.80, d(3,5)=1.37, d(1,3)=1.62, d(2,4)=1.60, d(1,2)=1.58, d(1,5)=1.78, d(4,5)=1.61, d(3,4)=1.77)
+#D = (0.40, 0.57, 0.80, 1.37, 1.62, 1.60, 1.58, 1.78, 1.61, 1.77)
+#f (δ) = (0.40, 0.57, 0.80, 1.37, 1.61, 1.61, 1.58, 1.78, 1.61, 1.77)
+#f (δ) = (0.40, 0.57, 0.80, 1.37, 1.60, 1.60, 1.60, 1.78, 1.61, 1.77)
+#f (δ) = (0.40, 0.57, 0.80, 1.37, 1.60, 1.60, 1.60, 1.70, 1.70, 1.77)
+```
+3) Calculate stress 1 for this configuration.
+```{r}
+d3 <- c(0.40, 0.57, 0.80, 1.37, 1.62, 1.60, 1.58, 1.78, 1.61, 1.77)
+f <- c(0.40, 0.57, 0.80, 1.37, 1.60, 1.60, 1.60, 1.70, 1.70, 1.77)
+stress1 <- (sum((f-d3)^2)/(d3%*%d3))^0.5
+stress1
+```
